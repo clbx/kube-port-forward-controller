@@ -37,41 +37,68 @@ func main() {
 		&v1.Service{},
 		time.Second*0,
 		cache.ResourceEventHandlerFuncs{
-			AddFunc: func(obj interface{}) {
 
+			// When adding a service
+			AddFunc: func(obj interface{}) {
 				service := obj.(*v1.Service)
+				fmt.Printf("New Service Added: %s\n", service.Name)
 				for key, value := range service.Annotations {
 					if key == "kube-router-port-forward/ports" {
-						fmt.Printf("Found new service with port annotation: %s value: %s\n", service.Name, value)
+						if len(service.Status.LoadBalancer.Ingress) > 0 {
+							ip := service.Status.LoadBalancer.Ingress[0].IP
+							fmt.Printf("MOCK: add new ip: %s, ports: %s\n", ip, value)
+							return
+						} else {
+							fmt.Printf("Add Service %s found, but either isn't a load balancer or doesn't have an IP. Ignoring\n", service.Name)
+							return
+						}
+
 					}
 				}
 
 			},
+
+			// When updating a service
 			UpdateFunc: func(oldObj, newObj interface{}) {
 				// Check if the old service had an annotation
 				oldService := oldObj.(*v1.Service)
 				for key, value := range oldService.Annotations {
 					if key == "kube-router-port-forward/ports" {
 						// Remove old port
-						fmt.Printf("MOCK: remove old ports: %s\n", value)
-
+						if len(oldService.Status.LoadBalancer.Ingress) > 0 {
+							ip := oldService.Status.LoadBalancer.Ingress[0].IP
+							fmt.Printf("MOCK: remove ip: %s ports: %s\n", ip, value)
+						}
 						// Add new port
 						newService := newObj.(*v1.Service)
 						for key, value := range newService.Annotations {
 							if key == "kube-router-port-forward/ports" {
 								//Add new port
-								fmt.Printf("MOCK: add new ports: %s\n", value)
+								if len(newService.Status.LoadBalancer.Ingress) > 0 {
+									ip := newService.Status.LoadBalancer.Ingress[0].IP
+									fmt.Printf("MOCK: update add new ip: %s ports: %s\n", ip, value)
+									return
+								} else {
+									fmt.Printf("Update Service %s found, but either isn't a load balancer or doesn't have an IP. Ignoring\n", newService.Name)
+									return
+								}
+
 							}
 						}
 					}
 				}
 
 			},
+
+			// When deleting a service
 			DeleteFunc: func(obj interface{}) {
 				service := obj.(*v1.Service)
 				for key, value := range service.Annotations {
 					if key == "kube-router-port-forward/ports" {
-						fmt.Printf("MOCK: remove port: %s\n", value)
+						if len(service.Status.LoadBalancer.Ingress) > 0 {
+							ip := service.Status.LoadBalancer.Ingress[0].IP
+							fmt.Printf("MOCK: remove ip: %s ports: %s\n", ip, value)
+						}
 					}
 				}
 			},
