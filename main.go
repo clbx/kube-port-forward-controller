@@ -111,14 +111,6 @@ func main() {
 					fmt.Printf("MOCK: Remove ip: %s port: %s from router", getLBIP(service), port)
 				}
 
-				// for key, value := range service.Annotations {
-				// 	if key == "kube-router-port-forward/ports" {
-				// 		if len(service.Status.LoadBalancer.Ingress) > 0 {
-				// 			ip := service.Status.LoadBalancer.Ingress[0].IP
-				// 			fmt.Printf("MOCK: remove ip: %s ports: %s\n", ip, value)
-				// 		}
-				// 	}
-				// }
 			},
 		},
 	)
