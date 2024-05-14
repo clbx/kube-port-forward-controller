@@ -43,25 +43,16 @@ func main() {
 			// and then the update function will catch it when it gets assinged it.
 			AddFunc: func(obj interface{}) {
 				service := obj.(*v1.Service)
-				//fmt.Printf("New Service Added: %s\n", service.Name)
-				// Check if the Service is a Load Balancer
+
 				if service.Spec.Type != "LoadBalancer" {
-					//fmt.Printf("Service %s is not a Load Balancer.. Skipping\n", service.Name)
 					return
 				}
 				fmt.Printf("Load Balancer %s found\n", service.Name)
-				for key, value := range service.Annotations {
-					if key == "kube-router-port-forward/ports" {
-						// Shitty, but it should assign an IP by this long, I'll figure it out later
-						if len(service.Status.LoadBalancer.Ingress) > 0 && service.Status.LoadBalancer.Ingress[0].IP != "" {
-							ip := service.Status.LoadBalancer.Ingress[0].IP
-							fmt.Printf("MOCK: update add new ip: %s ports: %s\n", ip, value)
-						} else {
-							fmt.Printf("New Service %s found, but LoadBalancer does not have an IP yet. Ignoring\n", service.Name)
-						}
-						return
-					}
+
+				if port, exists := service.Annotations["kube-router-port-forward/ports"]; exists {
+					fmt.Printf("MOCK: Add ip: %s port: %s from router", getLBIP(service), port)
 				}
+
 			},
 
 			// When updating a service
