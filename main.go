@@ -13,7 +13,6 @@ import (
 )
 
 func main() {
-
 	// load in cluster config from service account
 	config, err := rest.InClusterConfig()
 	if err != nil {
