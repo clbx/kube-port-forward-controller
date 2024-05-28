@@ -2,6 +2,10 @@ package main
 
 import (
 	"fmt"
+	"kube-router-port-forward/routers"
+	"log"
+	"os"
+	"strconv"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
@@ -12,7 +16,26 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
+var baseurl string
+var username string
+var password string
+var site string
+
+var router routers.Router
+
 func main() {
+
+	baseurl = "https://192.168.1.1"
+	site = "default"
+
+	username = os.Getenv("UNIFI_USERNAME")
+	password = os.Getenv("UNIFI_PASSWORD")
+
+	router, err := routers.CreateUnifiRouter(baseurl, username, password, site)
+	if err != nil {
+		log.Fatalf("Error: %v\n", err)
+	}
+
 	// load in cluster config from service account
 	config, err := rest.InClusterConfig()
 	if err != nil {
@@ -79,7 +102,23 @@ func main() {
 
 				//If there's just a new port
 				if !oldExists && newExists {
-					fmt.Printf("MOCK: Add port %s to router", newPort)
+
+					port, err := strconv.Atoi(newPort)
+					if err != nil {
+						log.Fatalf("Invalid port\n")
+					}
+					err = router.AddPort(routers.PortConfig{
+						DstPort:   port,
+						SrcPort:   port,
+						Enabled:   true,
+						Interface: "wan",
+						SrcIp:     getLBIP(newService),
+						Protocol:  "tcp_udp",
+					})
+					if err != nil {
+						log.Fatalf("Error trying to add port\n")
+					}
+					//fmt.Printf("MOCK: Add port %s to router", newPort)
 					return
 				}
 

@@ -1,7 +1,17 @@
 package routers
 
-// type RouterInterface interface {
-// 	AddPort(serviceName string, port int, ip string) error
-// 	RemovePort(port int, ip string) error
-// 	CheckPort(port int) (string, error)
-// }
+type Router interface {
+	AddPort(config PortConfig) error
+	RemovePort(port int) error
+	CheckPort(port int) (bool, error)
+}
+
+type PortConfig struct {
+	Name      string
+	Enabled   bool
+	Interface string
+	SrcPort   int
+	DstPort   int
+	SrcIp     string
+	Protocol  string
+}
